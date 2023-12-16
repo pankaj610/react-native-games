@@ -26,7 +26,8 @@ const Player: React.FC<PlayerProps> = ({ player }) => {
         {
             translateY: player.position.y,
         }
-        ]
+        ],
+        shadowColor: player.color,
     }
 
     return (<Animated.Image source={PLAYER_IMAGE[player.color]} style={[playerStyles, styles.player]} />)

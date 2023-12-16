@@ -14,7 +14,7 @@ export type Dice = {
 
 export const Dice: React.FC<{ dice: Dice }> = ({ dice }) => {
     const diceStyle = {
-        opacity: dice.opacity
+        opacity: dice.opacity,
     }
 
     return <Animated.Image source={DICE_FACE_IMAGE[dice.name]} style={[styles.dice, diceStyle]} />;
