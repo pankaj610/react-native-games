@@ -1,11 +1,13 @@
-import { applyMiddleware, combineReducers, createStore } from "redux";
-import { createLogger } from "redux-logger";
-import thunk from "redux-thunk";
-import appReducer from "./reducers/appReducer";
-import devoteeReducer from "./reducers/devoteeReducer";
+import { applyMiddleware, combineReducers, createStore } from 'redux';
+import { createLogger } from 'redux-logger';
+import { thunk } from 'redux-thunk';
+import appReducer from './reducers/appReducer';
+import devoteeReducer from './reducers/devoteeReducer';
 
 const middlewares = [thunk];
 middlewares.push(createLogger());
+
+console.log(middlewares);
 
 const reducers = {
   appReducer,

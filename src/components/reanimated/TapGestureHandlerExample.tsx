@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 const imageUri =
 	'https://images.unsplash.com/photo-1621569642780-4864752e847e?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=668&q=80';
 
+
 const { height, width } = Dimensions.get('window');
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 function TapGestureHandlerExample() {
@@ -49,7 +50,7 @@ function TapGestureHandlerExample() {
 						<Animated.View>
 							<ImageBackground source={{ uri: imageUri }} style={styles.image}>
 								<AnimatedImage
-									source={require('./../../../assets/heart.png')}
+									source={require('./../../assets/heart.png')}
 									style={[styles.heart, scaleStyle]}
 								/>
 							</ImageBackground>

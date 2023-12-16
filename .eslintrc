@@ -1,0 +1,65 @@
+{
+	"plugins": [
+		"react",
+		"react-native",
+		"react-hooks",
+		"prettier",
+		"jest",
+		"typescript",
+		"@typescript-eslint"
+	],
+	"parser": "babel-eslint",
+	"parserOptions": {
+		"ecmaVersion": 2018,
+		"ecmaFeatures": {
+			"jsx": true,
+			"modules": true
+		},
+		"sourceType": "module",
+		"useJSXTextNode": false
+	},
+	"env": {
+		"react-native/react-native": true,
+		"jest": true
+		//"jest/globals": true
+	},
+	"extends": [
+		"eslint:recommended",
+		"@react-native-community",
+		"standard",
+		"plugin:import/errors",
+		"plugin:import/warnings",
+		"plugin:react/recommended",
+		"plugin:react-native/all",
+		"plugin:import/typescript",
+		"prettier"
+	],
+	"rules": {
+		"react-hooks/exhaustive-deps": 0,
+		"react-native/no-raw-text": 0, // Avoid false positive, wait for fix
+		"camelcase": 0, // For allowing constants names,
+		"no-shadow": "off"
+	},
+	"settings": {
+		"import/ignore": ["node_modules/react-native/index\\.js$"]
+	},
+	"overrides": [
+		{
+			"files": ["**/*.spec.js", "**/*.spec.jsx"],
+			"env": {
+				"jest": true
+			}
+		}, {
+			"files": ["*.ts", "*.tsx"],
+			"parser": "@typescript-eslint/parser",
+			"extends": [
+				"plugin:@typescript-eslint/recommended"
+			],
+			"rules": {
+				// Note: you must disable the base rule as it can report incorrect errors
+				"no-use-before-define": "off",
+				"@typescript-eslint/no-use-before-define": "error"
+			  }
+		}
+	]
+}
