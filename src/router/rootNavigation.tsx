@@ -15,6 +15,7 @@ import ScrollProAnimation from '../components/reanimated/ScrollProAnimation';
 import PinGestureHandlerExample from '../components/reanimated/PinGestureHandlerExample';
 import TapGestureHandlerExample from '../components/reanimated/TapGestureHandlerExample';
 import SnakeAndLadder from '../components/SnakeAndLadder';
+import SnakeGame from '../components/SnakeGame';
 
 enableScreens();
 const Stack = createNativeStackNavigator();
@@ -32,6 +33,7 @@ class RootNavigation extends Component {
       </Stack.Navigator>
     ) : (
       <Drawer.Navigator>
+        <Drawer.Screen component={SnakeGame} name="SnakeGame" />
         <Drawer.Screen component={SnakeAndLadder} name="SnakeAndLadder" />
         <Drawer.Screen
           component={TapGestureHandlerExample}
