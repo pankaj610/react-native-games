@@ -1,9 +1,14 @@
-import { Animated } from "react-native"
+
 import styles from "./game.css"
 import { PLAYER_IMAGE } from "./constants"
+import { SharedValue, useAnimatedStyle } from "react-native-reanimated"
+import Reanimated from 'react-native-reanimated'
 
 export type PlayerType = {
-    position: Animated.ValueXY,
+    position: {
+        x: SharedValue<number>,
+        y: SharedValue<number>
+    },
     color: string,
     currentPosition: number
 }
@@ -19,18 +24,20 @@ interface PlayersProps {
 
 
 const Player: React.FC<PlayerProps> = ({ player }) => {
-    const playerStyles = {
-        transform: [{
-            translateX: player.position.x,
-        },
-        {
-            translateY: player.position.y,
-        }
-        ],
-        shadowColor: player.color,
-    }
 
-    return (<Animated.Image source={PLAYER_IMAGE[player.color]} style={[playerStyles, styles.player]} />)
+    const playerStyles = useAnimatedStyle(() => {
+        return {
+            transform: [{
+                translateX: player.position.x.value,
+            },
+            {
+                translateY: player.position.y.value,
+            }
+            ],
+        }
+    })
+
+    return (<Reanimated.Image source={PLAYER_IMAGE[player.color]} style={[playerStyles, styles.player, { shadowColor: player.color }]} />)
 }
 
 const Players: React.FC<PlayersProps> = ({ playerRefs }) => {

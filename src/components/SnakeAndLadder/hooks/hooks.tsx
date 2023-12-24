@@ -1,22 +1,105 @@
-import { useEffect, useRef, useState } from "react";
-import { PlayerType } from "../Players";
-import { BOARD_SIZE, DICE_FACE, NUM_PLAYER, PLAYER_COLOR, PLAYER_WIDTH, SNAKE_LADDER_SOUND, SOUNDS, SOUND_SOURCE } from "../constants";
-import { generateRandomDiceNumber } from "../helper";
-import { Animated, Easing } from "react-native";
-import { Alert } from "react-native";
-import { Dice } from "../Dices";
-import SoundManager from "../SoundManager";
+import { useEffect, useRef, useState } from 'react';
+import { PlayerType } from '../Players';
+import {
+    BOARD_SIZE,
+    DICE_FACE,
+    NUM_PLAYER,
+    PLAYER_COLOR,
+    PLAYER_WIDTH,
+    SNAKE_LADDER_SOUND,
+    SOUNDS,
+    SOUND_SOURCE,
+} from '../constants';
+import { generateRandomDiceNumber } from '../helper';
+import { Animated } from 'react-native';
+import { Alert } from 'react-native';
+import { Dice } from '../Dices';
+import SoundManager from '../SoundManager';
+import {
+    SharedValue,
+    runOnJS,
+    useSharedValue,
+    withTiming,
+    Easing,
+    ReduceMotion,
+} from 'react-native-reanimated';
+import { animateTiming } from '../helpers.tsx';
 
+let snakes: Record<
+    number,
+    { destination: number; xDiff: number; yDiff: number }[]
+> = {
+    // 98: [99, 81, 80, 62, 59, 41, 40],
+    // 84: [85, 75, 63, 58],
+    // 87: [88, 72, 69, 52, 49],
+    // 73: [74, 66, 55, 46, 35, 25, 15],
+    43: [
+        {
+            destination: 44,
+            xDiff: 0,
+            yDiff: 0,
+        },
+        {
+            destination: 45,
+            xDiff: -PLAYER_WIDTH / 3,
+            yDiff: -PLAYER_WIDTH / 3,
+        },
+        {
+            destination: 36,
+            xDiff: -PLAYER_WIDTH / 4,
+            yDiff: PLAYER_WIDTH / 4,
+        },
+        {
+            destination: 37,
+            xDiff: PLAYER_WIDTH / 4,
+            yDiff: PLAYER_WIDTH / 4,
+        },
+        {
+            destination: 24,
+            xDiff: -PLAYER_WIDTH / 4,
+            yDiff: -PLAYER_WIDTH / 3,
+        },
+        {
+            destination: 17,
+            xDiff: 0,
+            yDiff: 0,
+        },
+    ],
+    56: [
+        {
+            destination: 54,
+            xDiff: 0,
+            yDiff: 0,
+        },
+        {
+            destination: 48,
+            xDiff: -PLAYER_WIDTH / 4,
+            yDiff: 0,
+        },
+        {
+            destination: 33,
+            xDiff: -PLAYER_WIDTH / 2,
+            yDiff: 0,
+        },
+        {
+            destination: 27,
+            xDiff: PLAYER_WIDTH / 4,
+            yDiff: 0,
+        },
+        {
+            destination: 13,
+            xDiff: -PLAYER_WIDTH / 2,
+            yDiff: 0,
+        },
+        {
+            destination: 8,
+            xDiff: 0,
+            yDiff: 0,
+        },
+    ],
 
-let snakes: Record<number, number> = {
-    98: 40,
-    84: 58,
-    87: 49,
-    73: 15,
-    56: 8,
-    43: 17,
-    50: 5
-}
+    // 50: [49, 32, 27, 6, 5]
+};
 let ladder: Record<number, number> = {
     2: 23,
     6: 45,
@@ -26,116 +109,200 @@ let ladder: Record<number, number> = {
     71: 92,
     30: 96,
     4: 68,
-}
-const getPlayerInitialValue = () => new Array(NUM_PLAYER).fill(null).map((_, i) => ({
-    position: new Animated.ValueXY({
-        x: i * PLAYER_WIDTH,
-        y: BOARD_SIZE,
-    }),
-    color: PLAYER_COLOR[i],
-    currentPosition: 0,
-}))
+};
+const getPlayerInitialValue = (
+    xPositions: Array<SharedValue<number>>,
+    yPositions: Array<SharedValue<number>>,
+) => {
+    return new Array(NUM_PLAYER).fill(null).map((_, i) => ({
+        position: { x: xPositions[i], y: yPositions[i] },
+        color: PLAYER_COLOR[i],
+        currentPosition: 0,
+    }));
+};
 
-const getDiceInitialValue = () => DICE_FACE.map((num, i) => ({
-    value: i + 1,
-    opacity: new Animated.Value(i == 0 ? 1 : 0),
-    name: num,
-}))
+const getDiceInitialValue = () =>
+    DICE_FACE.map((num, i) => ({
+        value: i + 1,
+        opacity: new Animated.Value(i == 0 ? 1 : 0),
+        name: num,
+    }));
 
 const soundManager = new SoundManager<SNAKE_LADDER_SOUND>(SOUNDS, SOUND_SOURCE);
 
 function useSnakeAndLadder() {
+    const xPositions = [
+        useSharedValue(0),
+        useSharedValue(1 * PLAYER_WIDTH),
+        useSharedValue(2 * PLAYER_WIDTH),
+        useSharedValue(3 * PLAYER_WIDTH),
+    ];
+    const yPositions = [
+        useSharedValue(BOARD_SIZE - 0),
+        useSharedValue(BOARD_SIZE - 0),
+        useSharedValue(BOARD_SIZE - 0),
+        useSharedValue(BOARD_SIZE - 0),
+    ];
+
     const gameStatus = useRef({
         currentPlayer: 0,
-    })
+        isWait: false,
+    });
 
-    const currentPlayerRef = useRef<Animated.Value>(new Animated.Value(gameStatus.current.currentPlayer));
+    const currentPlayerRef = useRef<Animated.Value>(
+        new Animated.Value(gameStatus.current.currentPlayer),
+    );
 
-    const playerRefs = useRef<Array<PlayerType>>(getPlayerInitialValue());
+    const playerRefs = useRef<Array<PlayerType>>(
+        getPlayerInitialValue(xPositions, yPositions),
+    );
 
     const dicesRef = useRef<Array<Dice>>(getDiceInitialValue());
 
-    const [color, setColor] = useState(playerRefs.current[gameStatus.current.currentPlayer].color);
-
+    const [color, setColor] = useState(
+        playerRefs.current[gameStatus.current.currentPlayer].color,
+    );
 
     useEffect(() => {
         setColor(playerRefs.current[gameStatus.current.currentPlayer].color);
     }, [gameStatus.current.currentPlayer]);
 
     const throwDice = () => {
-        let numSequence = Array(10).fill(null).map(() => generateRandomDiceNumber());
+        // if(gameStatus.current.isWait) return
+        gameStatus.current.isWait = true;
+        let numSequence = Array(10)
+            .fill(null)
+            .map(() => generateRandomDiceNumber());
         let hideAnimations: Animated.CompositeAnimation[] = [];
         dicesRef.current.forEach(dice => {
-            hideAnimations.push(Animated.timing(dice.opacity, {
-                toValue: 0,
-                delay: 0,
-                duration: 100,
-                useNativeDriver: true
-            }));
+            hideAnimations.push(
+                Animated.timing(dice.opacity, {
+                    toValue: 0,
+                    delay: 0,
+                    duration: 100,
+                    useNativeDriver: true,
+                }),
+            );
         });
         Animated.parallel(hideAnimations).start(({ finished }) => {
             if (finished) {
                 soundManager.playSound('rolling-dice');
                 let animations: Animated.CompositeAnimation[] = [];
                 numSequence.forEach(num => {
-                    animations.push(Animated.timing(dicesRef.current[num - 1].opacity, { toValue: 1, duration: 0, easing: Easing.linear, useNativeDriver: true }))
-                    animations.push(Animated.timing(dicesRef.current[num - 1].opacity, { toValue: 0, delay: 40, duration: 0, easing: Easing.linear, useNativeDriver: true }))
-                })
-                Animated.sequence(animations).start(({ finished }) => {
+                    animations.push(
+                        Animated.timing(dicesRef.current[num - 1].opacity, {
+                            toValue: 1,
+                            duration: 0,
+                            easing: Easing.linear,
+                            useNativeDriver: true,
+                        }),
+                    );
+                    animations.push(
+                        Animated.timing(dicesRef.current[num - 1].opacity, {
+                            toValue: 0,
+                            delay: 40,
+                            duration: 0,
+                            easing: Easing.linear,
+                            useNativeDriver: true,
+                        }),
+                    );
+                });
+                Animated.sequence(animations).start(async ({ finished }) => {
                     if (finished) {
                         const steps = generateRandomDiceNumber();
-                        Animated.timing(dicesRef.current[steps - 1].opacity, { toValue: 1, duration: 10, easing: Easing.linear, useNativeDriver: true }).start();
-                        movePlayer(steps);
-                    }
-                })
-            }
-        })
-    }
+                        Animated.timing(dicesRef.current[steps - 1].opacity, {
+                            toValue: 1,
+                            duration: 10,
+                            easing: Easing.linear,
+                            useNativeDriver: true,
+                        }).start();
 
-    const movePlayer = (steps: number) => {
-        const playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+                        // moving the player over snake
+                        const source = parseInt(Object.keys(snakes)[0]);
+                        console.log({ source });
+                        let playerControl =
+                            playerRefs.current[gameStatus.current.currentPlayer];
+                        playerRefs.current[gameStatus.current.currentPlayer] = {
+                            ...playerControl,
+                            currentPosition: source,
+                        };
+                        await playerAnimate();
+                        movePlayer(0);
+
+                        // movePlayer(steps);
+                    }
+                });
+            }
+        });
+    };
+
+    const movePlayer = async (steps: number) => {
+        let playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+
         if (playerControl) {
-            if (playerControl.currentPosition + steps <= 100) {
-                playerControl.currentPosition += steps;
-            } else {
+            if (playerControl.currentPosition + steps > 100) {
                 nextPlayer();
                 return;
             }
-            if (playerControl.currentPosition == 100) {
-                Alert.alert("You win :", playerControl.color, [
-                    {
-                        text: 'Restart Game',
-                        onPress: () => restartGame(),
-                        style: 'cancel',
-                    }
-                ]);
-                return;
+            for (let i = 1; i <= steps; i++) {
+                playerRefs.current[gameStatus.current.currentPlayer] = {
+                    ...playerControl,
+                    currentPosition: (playerControl.currentPosition += 1),
+                };
+
+                playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+
+                if (playerControl.currentPosition == 100) {
+                    Alert.alert('You win :', playerControl.color, [
+                        {
+                            text: 'Restart Game',
+                            onPress: () => restartGame(),
+                            style: 'cancel',
+                        },
+                    ]);
+                    return;
+                }
+
+                soundManager.playSound('dice-step');
+
+                await playerAnimate();
             }
-            soundManager.playSound('dice-step');
-            playerAnimate(() => {
-                let isAnimateAgain = false;
-                if (snakes[playerControl.currentPosition]) {
-                    playerControl.currentPosition = snakes[playerControl.currentPosition]
-                    isAnimateAgain = true;
-                    soundManager.playSound('snake-hissing');
-                } else if (ladder[playerControl.currentPosition]) {
-                    playerControl.currentPosition = ladder[playerControl.currentPosition]
-                    isAnimateAgain = true;
-                    soundManager.playSound('ladder-bonus');
+
+            let isAnimateAgain = false;
+            if (snakes[playerControl.currentPosition]) {
+                let snakePositions = snakes[playerControl.currentPosition];
+                isAnimateAgain = true;
+                soundManager.playSound('snake-hissing');
+
+                for (let i = 0; i < snakePositions.length; i++) {
+                    playerRefs.current[gameStatus.current.currentPlayer] = {
+                        ...playerControl,
+                        currentPosition: snakePositions[i].destination,
+                    };
+                    await playerAnimate(snakePositions[i]);
                 }
-                if (isAnimateAgain) {
-                    playerAnimate();
-                } else {
-                    if (steps != 6) {
-                        nextPlayer();
-                    }
+            } else if (ladder[playerControl.currentPosition]) {
+                playerRefs.current[gameStatus.current.currentPlayer] = {
+                    ...playerControl,
+                    currentPosition: ladder[playerControl.currentPosition],
+                };
+                isAnimateAgain = true;
+                soundManager.playSound('ladder-bonus');
+            }
+            if (isAnimateAgain) {
+                await playerAnimate(true);
+                nextPlayer();
+            } else {
+                if (steps != 6) {
+                    nextPlayer();
                 }
-            });
+            }
         }
+    };
 
-    }
-
-    const playerAnimate = (onFinish = () => { nextPlayer() }) => {
+    const playerAnimate = async (
+        difference: { xDiff: number; yDiff: number } | undefined = undefined,
+    ) => {
         const playerControl = playerRefs.current[gameStatus.current.currentPlayer];
         if (playerControl) {
             let temp = playerControl.currentPosition % 20;
@@ -143,65 +310,83 @@ function useSnakeAndLadder() {
             if (temp > 10 || temp == 0) {
                 toX = BOARD_SIZE - toX - PLAYER_WIDTH;
             }
-            let toY = BOARD_SIZE - (Math.floor(playerControl.currentPosition / 10)) * PLAYER_WIDTH - PLAYER_WIDTH;
+            let toY =
+                BOARD_SIZE -
+                Math.floor(playerControl.currentPosition / 10) * PLAYER_WIDTH -
+                PLAYER_WIDTH;
             if (temp == 10 || temp == 0) {
                 toY += PLAYER_WIDTH;
             }
-            Animated.parallel([
-                Animated.timing(playerControl.position.x, {
-                    toValue: toX,
+            let p1 = animateTiming(
+                playerControl.position.x,
+                toX + (difference?.xDiff ?? 0),
+                {
                     duration: 300,
-                    delay: 0,
-                    easing: Easing.circle,
-                    useNativeDriver: true
-                }),
-                Animated.sequence([
-                    Animated.timing(playerControl.position.y, {
-                        toValue: toY - PLAYER_WIDTH,
-                        duration: 200,
-                        delay: 0,
-                        easing: Easing.circle,
-                        useNativeDriver: true
-                    }),
-                    Animated.timing(playerControl.position.y, {
-                        toValue: toY,
-                        duration: 100,
-                        delay: 0,
-                        easing: Easing.circle,
-                        useNativeDriver: true
-                    })
-                ])
-            ])
-                .start(({ finished }) => {
-                    if (finished) {
-                        onFinish();
-                    }
-                });
+                    easing: Easing.linear,
+                },
+            );
+
+            let py = animateTiming(
+                playerControl.position.y,
+                toY - PLAYER_WIDTH / 2,
+                {
+                    duration: 150,
+                    easing: Easing.linear,
+                },
+                () => {
+                    animateTiming(playerControl.position.y, toY, {
+                        duration: 150,
+                        easing: Easing.linear,
+                    });
+                },
+            );
+
+            if (difference) {
+                py = animateTiming(
+                    playerControl.position.y,
+                    toY + (difference?.yDiff ?? 0),
+                    {
+                        duration: 300,
+                        easing: Easing.linear,
+                    },
+                );
+            }
+
+            await Promise.all([p1, py]);
         }
-    }
+    };
 
     const restartGame = () => {
         playerRefs.current.forEach((player, i) => {
-            Animated.timing(player.position, {
-                toValue: {
-                    x: i * PLAYER_WIDTH,
-                    y: BOARD_SIZE,
-                },
-                delay: 0,
-                duration: 200,
-                useNativeDriver: true,
-            }).start();
+            let px = animateTiming(player.position.x, i * PLAYER_WIDTH, {
+                duration: 300,
+                easing: Easing.linear,
+            });
+
+            let py = animateTiming(player.position.y, BOARD_SIZE, {
+                duration: 150,
+                easing: Easing.linear,
+            });
+            Promise.all([px, py]);
             player.currentPosition = 0;
         });
-    }
+    };
 
     const nextPlayer = () => {
-        gameStatus.current.currentPlayer = (gameStatus.current.currentPlayer + 1) % NUM_PLAYER;
-        currentPlayerRef.current.setValue(gameStatus.current.currentPlayer)
-    }
+        gameStatus.current.currentPlayer =
+            (gameStatus.current.currentPlayer + 1) % NUM_PLAYER;
+        currentPlayerRef.current.setValue(gameStatus.current.currentPlayer);
+        gameStatus.current.isWait = false;
+    };
 
-
-    return { playerRefs, dicesRef, gameStatus, throwDice, currentPlayerRef }
+    return {
+        playerRefs,
+        dicesRef,
+        gameStatus,
+        throwDice,
+        currentPlayerRef,
+        resetGame: restartGame,
+    };
 }
 
 export default useSnakeAndLadder;

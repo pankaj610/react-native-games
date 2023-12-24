@@ -35,10 +35,10 @@ class RootNavigation extends Component {
       </Stack.Navigator>
     ) : (
       <Drawer.Navigator>
+        <Drawer.Screen component={SnakeAndLadder} name="SnakeAndLadder" />
         <Drawer.Screen component={MineSweeper} name="MineSweeper" />
         <Drawer.Screen component={FlappyBird} name="FlappyBird" />
         <Drawer.Screen component={SnakeGame} name="SnakeGame" />
-        <Drawer.Screen component={SnakeAndLadder} name="SnakeAndLadder" />
         <Drawer.Screen
           component={TapGestureHandlerExample}
           name="TapGestureHandlerExample"

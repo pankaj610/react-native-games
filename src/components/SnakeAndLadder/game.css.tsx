@@ -13,16 +13,18 @@ const styles = StyleSheet.create({
     },
     board: {
         width: BOARD_SIZE,
-        height: BOARD_SIZE
+        height: BOARD_SIZE,
+        flexDirection: 'column',
+        justifyContent: 'flex-end'
     },
     player: {
         height: PLAYER_WIDTH,
         width: PLAYER_WIDTH,
-        shadowOpacity: 0.7,
-        shadowOffset: {
-            height: 1,
-            width: 1
-        },
+        // shadowOpacity: 0.7,
+        // shadowOffset: {
+        //     height: 1,
+        //     width: 1
+        // },
         resizeMode: 'contain',
         position: 'absolute'
     },
