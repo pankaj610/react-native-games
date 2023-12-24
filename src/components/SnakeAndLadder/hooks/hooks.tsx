@@ -29,10 +29,121 @@ let snakes: Record<
     number,
     { destination: number; xDiff: number; yDiff: number }[]
 > = {
-    // 98: [99, 81, 80, 62, 59, 41, 40],
-    // 84: [85, 75, 63, 58],
-    // 87: [88, 72, 69, 52, 49],
-    // 73: [74, 66, 55, 46, 35, 25, 15],
+    98: [{
+        destination: 99,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 81,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 79,
+        xDiff: -PLAYER_WIDTH / 3,
+        yDiff: 0,
+    }, {
+        destination: 62,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 59,
+        xDiff: -PLAYER_WIDTH / 2,
+        yDiff: 0,
+    }, {
+        destination: 41,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 40,
+        xDiff: 0,
+        yDiff: 0,
+    }],
+    84: [{
+        destination: 85,
+        xDiff: 0,
+        yDiff: -PLAYER_WIDTH / 4,
+    },
+    {
+        destination: 86,
+        xDiff: 0,
+        yDiff: 0,
+    }
+        , {
+        destination: 75,
+        xDiff: -PLAYER_WIDTH / 2,
+        yDiff: 0,
+    }, {
+        destination: 76,
+        yDiff: -PLAYER_WIDTH / 4,
+        xDiff: 0,
+    }, {
+        destination: 77,
+        yDiff: -PLAYER_WIDTH / 4,
+        xDiff: 0,
+    }, {
+        destination: 63,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 58,
+        xDiff: 0,
+        yDiff: 0,
+    }],
+    87: [{
+        destination: 88,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 89,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 71,
+        xDiff: -PLAYER_WIDTH / 3,
+        yDiff: -PLAYER_WIDTH / 3,
+    }, {
+        destination: 70,
+        xDiff: -PLAYER_WIDTH / 2,
+        yDiff: 0,
+    }, {
+        destination: 52,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 49,
+        xDiff: 0,
+        yDiff: 0,
+    }],
+    73: [{
+        destination: 74,
+        xDiff: 0,
+        yDiff: -PLAYER_WIDTH / 4,
+    }, {
+        destination: 66,
+        xDiff: PLAYER_WIDTH / 4,
+        yDiff: 0,
+    }, {
+        destination: 55,
+        xDiff: PLAYER_WIDTH / 4,
+        yDiff: 0,
+    }, {
+        destination: 46,
+        xDiff: PLAYER_WIDTH / 2,
+        yDiff: 0,
+    }, {
+        destination: 35,
+        xDiff: -PLAYER_WIDTH / 4,
+        yDiff: 0,
+    },
+    {
+        destination: 25,
+        xDiff: PLAYER_WIDTH / 2,
+        yDiff: 0,
+    }, {
+        destination: 15,
+        xDiff: 0,
+        yDiff: 0,
+    }],
     43: [
         {
             destination: 44,
@@ -98,7 +209,27 @@ let snakes: Record<
         },
     ],
 
-    // 50: [49, 32, 27, 6, 5]
+    50: [{
+        destination: 49,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 32,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 27,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 6,
+        xDiff: 0,
+        yDiff: 0,
+    }, {
+        destination: 5,
+        xDiff: 0,
+        yDiff: 0,
+    }]
 };
 let ladder: Record<number, number> = {
     2: 23,
@@ -138,10 +269,10 @@ function useSnakeAndLadder() {
         useSharedValue(3 * PLAYER_WIDTH),
     ];
     const yPositions = [
-        useSharedValue(BOARD_SIZE - 0),
-        useSharedValue(BOARD_SIZE - 0),
-        useSharedValue(BOARD_SIZE - 0),
-        useSharedValue(BOARD_SIZE - 0),
+        useSharedValue(PLAYER_WIDTH),
+        useSharedValue(PLAYER_WIDTH),
+        useSharedValue(PLAYER_WIDTH),
+        useSharedValue(PLAYER_WIDTH),
     ];
 
     const gameStatus = useRef({
@@ -217,19 +348,7 @@ function useSnakeAndLadder() {
                             useNativeDriver: true,
                         }).start();
 
-                        // moving the player over snake
-                        const source = parseInt(Object.keys(snakes)[0]);
-                        console.log({ source });
-                        let playerControl =
-                            playerRefs.current[gameStatus.current.currentPlayer];
-                        playerRefs.current[gameStatus.current.currentPlayer] = {
-                            ...playerControl,
-                            currentPosition: source,
-                        };
-                        await playerAnimate();
-                        movePlayer(0);
-
-                        // movePlayer(steps);
+                        movePlayer(steps);
                     }
                 });
             }
@@ -310,10 +429,7 @@ function useSnakeAndLadder() {
             if (temp > 10 || temp == 0) {
                 toX = BOARD_SIZE - toX - PLAYER_WIDTH;
             }
-            let toY =
-                BOARD_SIZE -
-                Math.floor(playerControl.currentPosition / 10) * PLAYER_WIDTH -
-                PLAYER_WIDTH;
+            let toY = -Math.floor(playerControl.currentPosition / 10) * PLAYER_WIDTH;
             if (temp == 10 || temp == 0) {
                 toY += PLAYER_WIDTH;
             }
