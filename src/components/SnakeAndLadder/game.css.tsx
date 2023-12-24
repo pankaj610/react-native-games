@@ -34,6 +34,12 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
         position: 'absolute',
     },
+    diceOnly: {
+        height: DICE_WIDTH,
+        width: DICE_WIDTH,
+        resizeMode: 'contain',
+        position: 'absolute'
+    },
     diceContainer: {
         height: DICE_WIDTH,
         width: DICE_WIDTH,
