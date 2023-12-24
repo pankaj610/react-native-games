@@ -479,10 +479,11 @@ function useSnakeAndLadder() {
                 easing: Easing.linear,
             });
 
-            let py = animateTiming(player.position.y, BOARD_SIZE, {
+            let py = animateTiming(player.position.y, PLAYER_WIDTH, {
                 duration: 150,
                 easing: Easing.linear,
             });
+
             Promise.all([px, py]);
             player.currentPosition = 0;
         });

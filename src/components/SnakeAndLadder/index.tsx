@@ -26,9 +26,6 @@ function SnakeAndLadder() {
         </ImageBackground>
 
 
-
-
-
         <Dices dicesRef={dicesRef} onPress={throwDice} />
 
     </Animated.View>
