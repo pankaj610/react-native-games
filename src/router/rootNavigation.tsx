@@ -18,6 +18,7 @@ import SnakeAndLadder from '../components/SnakeAndLadder';
 import SnakeGame from '../components/SnakeGame';
 import FlappyBird from '../components/FlappyBird';
 import MineSweeper from '../components/MineSweeper';
+import { AnimatedTabNavigator } from '../components/AnimatedTabNavigator';
 
 enableScreens();
 const Stack = createNativeStackNavigator();
@@ -35,9 +36,10 @@ class RootNavigation extends Component {
       </Stack.Navigator>
     ) : (
       <Drawer.Navigator>
+        <Drawer.Screen component={AnimatedTabNavigator} name="AnimatedTabNavigator" />
+        <Drawer.Screen component={FlappyBird} name="FlappyBird" />
         <Drawer.Screen component={SnakeAndLadder} name="SnakeAndLadder" />
         <Drawer.Screen component={MineSweeper} name="MineSweeper" />
-        <Drawer.Screen component={FlappyBird} name="FlappyBird" />
         <Drawer.Screen component={SnakeGame} name="SnakeGame" />
         <Drawer.Screen
           component={TapGestureHandlerExample}

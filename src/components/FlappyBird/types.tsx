@@ -6,6 +6,7 @@ export interface MatterType {
     size: Array<number>;
     color: string;
     renderer: FunctionComponent<MatterType>;
+    pose: number;
 }
 
 export interface PhysicsType {
@@ -20,6 +21,7 @@ interface Map {
 export interface EntitiesType extends Map {
     physics: PhysicsType;
     bird: MatterType;
+    world: Matter.World;
     floor?: MatterType;
     ceiling?: MatterType;
     pipe1?: MatterType;
