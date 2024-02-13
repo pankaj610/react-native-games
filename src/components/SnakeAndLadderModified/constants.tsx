@@ -1,4 +1,5 @@
 import { Dimensions, ImageSourcePropType } from "react-native";
+import { PlayerName } from "./hooks/hooks";
 
 export const screenWidth = Dimensions.get('screen').width;
 
@@ -13,6 +14,13 @@ export const DICE_WIDTH = BOARD_SIZE / 6;
 export const NUM_PLAYER = 4;
 
 export const PLAYER_COLOR = ['red', 'green', 'yellow', 'blue'];
+
+export const PLAYER_SVG: Record<PlayerName, any> = {
+    'red': require('./assets/yellowPlayer.svg').default,
+    'blue': require('./assets/bluePlayer.svg').default,
+    'green': require('./assets/greenPlayer.svg').default,
+    'yellow': require('./assets/redPlayer.svg').default
+}
 
 export const DICE_FACE = ['one', 'two', 'three', 'four', 'five', 'six'];
 

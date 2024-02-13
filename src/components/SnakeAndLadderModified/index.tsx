@@ -1,23 +1,22 @@
-import { Animated, Button, ImageBackground, Text } from "react-native";
+import { Animated, Button, View } from "react-native";
 import styles from "./game.css";
 import useSnakeAndLadder from "./hooks/hooks";
-import Players from "./Players";
 import { Dices } from "./Dices";
-import { NUM_PLAYER, PLAYER_COLOR, PLAYER_IMAGE } from "./constants";
-import Reanimated from "react-native-reanimated";
+import { NUM_PLAYER, PLAYER_COLOR } from "./constants";
 import Board from "./components/Board";
+import { Players } from "./components/Players";
 
 
 
 function SnakeAndLadderModified() {
-    const { playerRefs, dicesRef, currentPlayerRef, boardRef, numberMapping, throwDice, resetGame } = useSnakeAndLadder();
+    const { playerRefs, dicesRef, boardRef, rootContainerRef, numberMapping, throwDice, resetGame } = useSnakeAndLadder();
 
-    const backgroundStyles = {
-        backgroundColor: currentPlayerRef.current.interpolate({
-            inputRange: Array(NUM_PLAYER).fill(null).map((_, i) => i),
-            outputRange: PLAYER_COLOR
-        })
-    }
+    // const backgroundStyles = {
+    //     backgroundColor: currentPlayerRef.current.interpolate({
+    //         inputRange: Array(NUM_PLAYER).fill(null).map((_, i) => i),
+    //         outputRange: PLAYER_COLOR
+    //     })
+    // }
 
     const tempFunction = () => {
         console.log(numberMapping)
@@ -25,11 +24,15 @@ function SnakeAndLadderModified() {
         // console.log(JSON.stringify(boardRef.current, null, 2))
     }
 
-    return <Animated.View style={[styles.container]}>
+    const callback: React.LegacyRef<View> = (element: View) =>
+        (rootContainerRef.current = element);
+
+    return <View style={[styles.container]} ref={callback}>
         <Button title="View Output" onPress={tempFunction} />
         {/* <Button title="Reset" onPress={resetGame} /> */}
 
         <Board boardRef={boardRef} />
+        <Players playerRefs={playerRefs} />
 
         {/* <ImageBackground source={require('./assets/board.png')} style={styles.board} >
             <Players playerRefs={playerRefs} />
@@ -38,7 +41,7 @@ function SnakeAndLadderModified() {
 
         <Dices dicesRef={dicesRef} onPress={throwDice} />
 
-    </Animated.View>
+    </View>
 }
 
 export default SnakeAndLadderModified

@@ -1,11 +1,7 @@
-
-import { LegacyRef, MutableRefObject, useRef } from 'react';
 import { Text, View, StyleSheet } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
 import { screenWidth } from '../constants';
-import LinearGradient from 'react-native-linear-gradient';
 import { BoardRefType } from '../hooks/hooks';
-import { SvgUri } from 'react-native-svg';
+
 
 interface BoardProps {
     boardRef: React.MutableRefObject<BoardRefType>,
@@ -37,13 +33,7 @@ const Board = (props: BoardProps) => {
                     </View>)
                 })}
             </View>
-            <View>
-                <SvgUri
-                    width="200"
-                    height="200"
-                    uri={require('../assets/yellowPlayer.svg')}
-                />
-            </View>
+
         </View>
     );
 };

@@ -8,8 +8,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
+        // justifyContent: 'center',
+        // alignItems: 'center'
     },
     board: {
         width: BOARD_SIZE,

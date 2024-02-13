@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PlayerType } from '../Players.tsx';
 import {
     BOARD_SIZE,
     DICE_FACE,
     NUM_PLAYER,
     PLAYER_COLOR,
+    PLAYER_SVG,
     PLAYER_WIDTH,
     SNAKE_LADDER_SOUND,
     SOUNDS,
@@ -242,16 +242,11 @@ let ladder: Record<number, number> = {
     30: 96,
     4: 68,
 };
-const getPlayerInitialValue = (
-    xPositions: Array<SharedValue<number>>,
-    yPositions: Array<SharedValue<number>>,
-) => {
-    return new Array(NUM_PLAYER).fill(null).map((_, i) => ({
-        position: { x: xPositions[i], y: yPositions[i] },
-        color: PLAYER_COLOR[i],
-        currentPosition: 0,
-    }));
-};
+export type PlayerColor = 'yellow' | 'blue' | 'red' | 'green'
+export type PlayerNumber = 1 | 2 | 3
+export type PlayerData = { location: { x: SharedValue<number>, y: SharedValue<number> }, position: number }
+export type PlayerGroup = Record<PlayerNumber, PlayerData>
+export type PlayerRefsType = Record<PlayerColor, PlayerGroup>
 
 const getDiceInitialValue = () =>
     DICE_FACE.map((num, i) => ({
@@ -265,35 +260,122 @@ const soundManager = new SoundManager<SNAKE_LADDER_SOUND>(SOUNDS, SOUND_SOURCE);
 export type BoardRefType = {
     ref: React.MutableRefObject<View | undefined>,
     layout: LayoutRectangle | null,
-    num: number
+    num: number,
+    absolute: {
+        x: number,
+        y: number,
+    }
 }[][]
 
 function useSnakeAndLadder() {
-    const xPositions = [
-        useSharedValue(0),
-        useSharedValue(1 * PLAYER_WIDTH),
-        useSharedValue(2 * PLAYER_WIDTH),
-        useSharedValue(3 * PLAYER_WIDTH),
-    ];
-    const yPositions = [
-        useSharedValue(PLAYER_WIDTH),
-        useSharedValue(PLAYER_WIDTH),
-        useSharedValue(PLAYER_WIDTH),
-        useSharedValue(PLAYER_WIDTH),
-    ];
-
-    const gameStatus = useRef({
-        currentPlayer: 0,
-        isWait: false,
+    const playerRefs = useRef<PlayerRefsType>({
+        yellow: {
+            1: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            2: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            3: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            }
+        },
+        blue: {
+            1: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            2: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            3: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            }
+        },
+        red: {
+            1: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            2: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            3: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            }
+        },
+        green: {
+            1: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            2: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            },
+            3: {
+                location: {
+                    x: useSharedValue(0),
+                    y: useSharedValue(0),
+                },
+                position: 0,
+            }
+        },
     });
 
-    const currentPlayerRef = useRef<Animated.Value>(
-        new Animated.Value(gameStatus.current.currentPlayer),
-    );
+    const gameStatus = useRef<{
+        currentPlayer: PlayerColor,
+    }>({
+        currentPlayer: 'yellow',
+    });
 
-    const playerRefs = useRef<Array<PlayerType>>(
-        getPlayerInitialValue(xPositions, yPositions),
-    );
+    // const currentPlayerRef = useRef<Animated.Value>(
+    //     new Animated.Value(gameStatus.current.currentPlayer),
+    // );
+
+    // const playerRefs: Array<PlayerType> = useMemo(() => (
+    //     getPlayerInitialValue(playerPositions)
+    // ), [])
 
     const dicesRef = useRef<Array<Dice>>(getDiceInitialValue());
 
@@ -303,10 +385,13 @@ function useSnakeAndLadder() {
             ref: useRef<View>(),
             layout: null,
             num: finalNumber,
+            absolute: { x: 0, y: 0 }
         })
     }), 10));
 
-    const numberMapping = useMemo(() => {
+    const rootContainerRef = useRef<View>()
+
+    const numberMapping = useMemo<Record<number, { i: number, j: number }>>(() => {
         const mapping = {}
         boardRef.current.forEach((row, i) => {
             row.forEach((column, j) => {
@@ -316,17 +401,28 @@ function useSnakeAndLadder() {
         return mapping
     }, [boardRef.current])
 
-    const [color, setColor] = useState(
-        playerRefs.current[gameStatus.current.currentPlayer].color,
-    );
+    // const [color, setColor] = useState(
+    //     playerRefs.current[gameStatus.current.currentPlayer],
+    // );
 
     useEffect(() => {
-        setColor(playerRefs.current[gameStatus.current.currentPlayer].color);
+        // setColor(playerRefs[gameStatus.current.currentPlayer].color);
+        setTimeout(() => {
+            rootContainerRef.current?.measure((x_p, y_p, w_p, h_p, px_p, py_p) => {
+                boardRef.current.forEach((row, i) => {
+                    row.forEach((column, j) => {
+                        column.ref.current?.measure((x, y, w, h, px, py) => {
+                            Object.assign(boardRef.current[i][j], { absolute: { x: px, y: py - py_p } })
+                        })
+                    })
+                })
+            })
+        }, 1000)
     }, [gameStatus.current.currentPlayer]);
 
     const throwDice = () => {
         // if(gameStatus.current.isWait) return
-        gameStatus.current.isWait = true;
+        // gameStatus.current.isWait = true;
         let numSequence = Array(10)
             .fill(null)
             .map(() => generateRandomDiceNumber());
@@ -381,145 +477,178 @@ function useSnakeAndLadder() {
         });
     };
 
-    const movePlayer = async (steps: number) => {
-        let playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+    const movePlayer = async (steps: number, num: PlayerNumber = 1) => {
+        // console.log(steps, gameStatus.current.currentPlayer, playerRefs.current.yellow)
+        let playerControl = playerRefs.current[gameStatus.current.currentPlayer][num];
 
         if (playerControl) {
-            if (playerControl.currentPosition + steps > 100) {
+            if (playerControl.position + steps > 100) {
                 nextPlayer();
                 return;
             }
             for (let i = 1; i <= steps; i++) {
-                playerRefs.current[gameStatus.current.currentPlayer] = {
-                    ...playerControl,
-                    currentPosition: (playerControl.currentPosition += 1),
-                };
+                // playerRefs[gameStatus.current.currentPlayer] = {
+                //     ...playerControl,
+                //     currentPosition: (playerControl.currentPosition += 1),
+                // };
+                playerControl.position += 1
 
-                playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+                //         playerControl = playerRefs[gameStatus.current.currentPlayer];
 
-                if (playerControl.currentPosition == 100) {
-                    Alert.alert('You win :', playerControl.color, [
-                        {
-                            text: 'Restart Game',
-                            onPress: () => restartGame(),
-                            style: 'cancel',
-                        },
-                    ]);
-                    return;
-                }
-
-                soundManager.playSound('dice-step');
-
-                await playerAnimate();
+                //         if (playerControl.currentPosition == 100) {
+                //             Alert.alert('You win :', playerControl.color, [
+                //                 {
+                //                     text: 'Restart Game',
+                //                     onPress: () => restartGame(),
+                //                     style: 'cancel',
+                //                 },
+                //             ]);
+                //             return;
+                await playerAnimate(num);
             }
 
-            let isAnimateAgain = false;
-            if (snakes[playerControl.currentPosition]) {
-                let snakePositions = snakes[playerControl.currentPosition];
-                isAnimateAgain = true;
-                soundManager.playSound('snake-hissing');
+            //         soundManager.playSound('dice-step');
 
-                for (let i = 0; i < snakePositions.length; i++) {
-                    playerRefs.current[gameStatus.current.currentPlayer] = {
-                        ...playerControl,
-                        currentPosition: snakePositions[i].destination,
-                    };
-                    await playerAnimate(snakePositions[i]);
-                }
-            } else if (ladder[playerControl.currentPosition]) {
-                playerRefs.current[gameStatus.current.currentPlayer] = {
-                    ...playerControl,
-                    currentPosition: ladder[playerControl.currentPosition],
-                };
-                isAnimateAgain = true;
-                soundManager.playSound('ladder-bonus');
-            }
-            if (isAnimateAgain) {
-                await playerAnimate(true);
-                nextPlayer();
-            } else {
-                if (steps != 6) {
-                    nextPlayer();
-                }
-            }
+
+            //     }
+
+            //     let isAnimateAgain = false;
+            //     if (snakes[playerControl.currentPosition]) {
+            //         let snakePositions = snakes[playerControl.currentPosition];
+            //         isAnimateAgain = true;
+            //         soundManager.playSound('snake-hissing');
+
+            //         for (let i = 0; i < snakePositions.length; i++) {
+            //             playerRefs[gameStatus.current.currentPlayer] = {
+            //                 ...playerControl,
+            //                 currentPosition: snakePositions[i].destination,
+            //             };
+            //             await playerAnimate(snakePositions[i]);
+            //         }
+            //     } else if (ladder[playerControl.currentPosition]) {
+            //         playerRefs[gameStatus.current.currentPlayer] = {
+            //             ...playerControl,
+            //             currentPosition: ladder[playerControl.currentPosition],
+            //         };
+            //         isAnimateAgain = true;
+            //         soundManager.playSound('ladder-bonus');
+            //     }
+            //     if (isAnimateAgain) {
+            //         await playerAnimate(true);
+            //         nextPlayer();
+            //     } else {
+            //         if (steps != 6) {
+            //             nextPlayer();
+            //         }
+            //     }
         }
     };
 
     const playerAnimate = async (
+        num: PlayerNumber,
         difference: { xDiff: number; yDiff: number } | undefined = undefined,
     ) => {
-        const playerControl = playerRefs.current[gameStatus.current.currentPlayer];
+        let playerControl = playerRefs.current[gameStatus.current.currentPlayer][num];
         if (playerControl) {
-            let temp = playerControl.currentPosition % 20;
-            let toX = ((playerControl.currentPosition - 1) % 10) * PLAYER_WIDTH;
-            if (temp > 10 || temp == 0) {
-                toX = BOARD_SIZE - toX - PLAYER_WIDTH;
-            }
-            let toY = -Math.floor(playerControl.currentPosition / 10) * PLAYER_WIDTH;
-            if (temp == 10 || temp == 0) {
-                toY += PLAYER_WIDTH;
-            }
-            let p1 = animateTiming(
-                playerControl.position.x,
-                toX + (difference?.xDiff ?? 0),
+            // let temp = playerControl.location.x.value = 
+            const positionMapping = numberMapping[playerControl.position]
+            const absolutePosition = boardRef.current[positionMapping.i][positionMapping.j].absolute
+            // console.log(playerControl.position, absolutePosition)
+
+            let px = animateTiming(
+                playerControl.location.x,
+                absolutePosition.x,
                 {
-                    duration: 300,
+                    duration: 150,
                     easing: Easing.linear,
                 },
             );
 
             let py = animateTiming(
-                playerControl.position.y,
-                toY - PLAYER_WIDTH / 2,
+                playerControl.location.y,
+                absolutePosition.y,
                 {
                     duration: 150,
                     easing: Easing.linear,
                 },
                 () => {
-                    animateTiming(playerControl.position.y, toY, {
-                        duration: 150,
-                        easing: Easing.linear,
-                    });
+                    // animateTiming(playerControl.position.y, toY, {
+                    //     duration: 150,
+                    //     easing: Easing.linear,
+                    // });
                 },
             );
 
-            if (difference) {
-                py = animateTiming(
-                    playerControl.position.y,
-                    toY + (difference?.yDiff ?? 0),
-                    {
-                        duration: 300,
-                        easing: Easing.linear,
-                    },
-                );
-            }
+            //  % 20;
+            // let toX = ((playerControl.currentPosition - 1) % 10) * PLAYER_WIDTH;
+            //     if (temp > 10 || temp == 0) {
+            //         toX = BOARD_SIZE - toX - PLAYER_WIDTH;
+            //     }
+            //     let toY = -Math.floor(playerControl.currentPosition / 10) * PLAYER_WIDTH;
+            //     if (temp == 10 || temp == 0) {
+            //         toY += PLAYER_WIDTH;
+            //     }
+            //     let p1 = animateTiming(
+            //         playerControl.position.x,
+            //         toX + (difference?.xDiff ?? 0),
+            //         {
+            //             duration: 300,
+            //             easing: Easing.linear,
+            //         },
+            //     );
 
-            await Promise.all([p1, py]);
+            // let py = animateTiming(
+            //     playerControl.position.y,
+            //     toY - PLAYER_WIDTH / 2,
+            //     {
+            //         duration: 150,
+            //         easing: Easing.linear,
+            //     },
+            //     () => {
+            //         animateTiming(playerControl.position.y, toY, {
+            //             duration: 150,
+            //             easing: Easing.linear,
+            //         });
+            //     },
+            // );
+
+            //     if (difference) {
+            //         py = animateTiming(
+            //             playerControl.position.y,
+            //             toY + (difference?.yDiff ?? 0),
+            //             {
+            //                 duration: 300,
+            //                 easing: Easing.linear,
+            //             },
+            //         );
+            //     }
+
+            await Promise.all([px, py]);
         }
     };
 
     const restartGame = () => {
-        playerRefs.current.forEach((player, i) => {
-            let px = animateTiming(player.position.x, i * PLAYER_WIDTH, {
-                duration: 300,
-                easing: Easing.linear,
-            });
+        // playerRefs.forEach((player, i) => {
+        //     let px = animateTiming(player.position.x, i * PLAYER_WIDTH, {
+        //         duration: 300,
+        //         easing: Easing.linear,
+        //     });
 
-            let py = animateTiming(player.position.y, PLAYER_WIDTH, {
-                duration: 150,
-                easing: Easing.linear,
-            });
+        //     let py = animateTiming(player.position.y, PLAYER_WIDTH, {
+        //         duration: 150,
+        //         easing: Easing.linear,
+        //     });
 
-            Promise.all([px, py]);
-            player.currentPosition = 0;
-        });
+        //     Promise.all([px, py]);
+        //     player.currentPosition = 0;
+        // });
     };
 
     const nextPlayer = () => {
-        gameStatus.current.currentPlayer =
-            (gameStatus.current.currentPlayer + 1) % NUM_PLAYER;
-        currentPlayerRef.current.setValue(gameStatus.current.currentPlayer);
-        gameStatus.current.isWait = false;
+        // gameStatus.current.currentPlayer =
+        //     (gameStatus.current.currentPlayer + 1) % NUM_PLAYER;
+        // currentPlayerRef.current.setValue(gameStatus.current.currentPlayer);
+        // gameStatus.current.isWait = false;
     };
 
     return {
@@ -527,10 +656,11 @@ function useSnakeAndLadder() {
         dicesRef,
         gameStatus,
         throwDice,
-        currentPlayerRef,
+        // currentPlayerRef,
         resetGame: restartGame,
         boardRef,
-        numberMapping
+        rootContainerRef,
+        numberMapping,
     };
 }
 
