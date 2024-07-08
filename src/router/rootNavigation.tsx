@@ -18,6 +18,7 @@ import SnakeAndLadder from '../components/SnakeAndLadder';
 import SnakeGame from '../components/SnakeGame';
 import FlappyBird from '../components/FlappyBird';
 import MineSweeper from '../components/MineSweeper';
+import ChessGameComponent from '../components/ChessGame';
 
 enableScreens();
 const Stack = createNativeStackNavigator();
@@ -35,6 +36,7 @@ class RootNavigation extends Component {
       </Stack.Navigator>
     ) : (
       <Drawer.Navigator>
+        <Drawer.Screen component={ChessGameComponent} name="ChessGame" />
         <Drawer.Screen component={MineSweeper} name="MineSweeper" />
         <Drawer.Screen component={FlappyBird} name="FlappyBird" />
         <Drawer.Screen component={SnakeGame} name="SnakeGame" />
